@@ -7,13 +7,27 @@
     "start": "electron .",
     "build": "electron-builder"
   },
+  "build": {
+    "appId": "com.yourusername.fileorganizer",
+    "productName": "File Organizer",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "assets/icon.icns"
+    },
+    "win": {
+      "icon": "assets/icon.ico"
+    },
+    "linux": {
+      "icon": "assets/icon.png"
+    }
+  },
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^28.3.3",
-    "electron-builder": "^24.13.3"
+    "electron": "^28.0.0",
+    "electron-builder": "^24.6.3"
   },
   "dependencies": {
-    "fs-extra": "^11.3.0"
+    "fs-extra": "^11.1.1"
   }
 }
