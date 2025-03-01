@@ -1,18 +1,52 @@
+// index.html
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>File Organizer</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 20px; }
-      button { margin: 5px; padding: 10px; }
-    </style>
-  </head>
-  <body>
-    <h1>File Organizer App</h1>
-    <button id="organizeBtn">Organize Files</button>
-    <div id="status"></div>
-
-    <script src="renderer.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <title>File Organizer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>File Organizer</h1>
+    
+    <div class="control-panel">
+      <div class="directory-selection">
+        <p>Selected Directory: <span id="selected-path">None</span></p>
+        <button id="select-dir-btn">Select Directory</button>
+      </div>
+      
+      <button id="organize-btn" disabled>Organize Files</button>
+    </div>
+    
+    <div class="file-types">
+      <h2>Files will be organized into:</h2>
+      <ul>
+        <li><strong>documents:</strong> PDF, TXT, DOC, DOCX, etc.</li>
+        <li><strong>images:</strong> JPG, PNG, GIF, etc.</li>
+        <li><strong>videos:</strong> MP4, MOV, AVI, etc.</li>
+        <li><strong>audio:</strong> MP3, WAV, FLAC, etc.</li>
+        <li><strong>archives:</strong> ZIP, RAR, 7Z, etc.</li>
+        <li><strong>code:</strong> JS, PY, HTML, CSS, etc.</li>
+        <li><strong>other:</strong> All unrecognized file types</li>
+      </ul>
+    </div>
+    
+    <div id="results" class="hidden">
+      <h2>Organization Results</h2>
+      <div class="results-content">
+        <div id="success-container">
+          <h3>Successfully Organized</h3>
+          <ul id="success-list"></ul>
+        </div>
+        <div id="error-container">
+          <h3>Errors</h3>
+          <ul id="error-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="renderer.js"></script>
+</body>
 </html>

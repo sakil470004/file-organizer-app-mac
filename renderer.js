@@ -1,58 +1,67 @@
 // renderer.js
-const fs = require('fs');
-const path = require('path');
-const { dialog } = require('electron').remote || require('@electron/remote');
-
-const organizeBtn = document.getElementById('organizeBtn');
-const statusDiv = document.getElementById('status');
-
-organizeBtn.addEventListener('click', () => {
-  // Open a dialog to choose a directory to organize
-  dialog.showOpenDialog({
-    properties: ['openDirectory']
-  }).then(result => {
-    if (!result.canceled) {
-      const folderPath = result.filePaths[0];
-      organizeFiles(folderPath);
-    }
-  }).catch(err => {
-    statusDiv.innerText = `Error: ${err}`;
-  });
-});
-
-function organizeFiles(folderPath) {
-  // Read the files in the selected directory
-  fs.readdir(folderPath, (err, files) => {
-    if (err) {
-      statusDiv.innerText = `Error reading directory: ${err}`;
-      return;
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    const selectDirBtn = document.getElementById('select-dir-btn');
+    const organizeBtn = document.getElementById('organize-btn');
+    const selectedPathElement = document.getElementById('selected-path');
+    const resultsDiv = document.getElementById('results');
+    const successList = document.getElementById('success-list');
+    const errorList = document.getElementById('error-list');
     
-    // For each file, check its extension and move it to a subfolder
-    files.forEach(file => {
-      const filePath = path.join(folderPath, file);
-      fs.stat(filePath, (err, stats) => {
-        if (err) return;
-        if (stats.isFile()) {
-          const ext = path.extname(file).slice(1); // remove the dot
-          if (!ext) return; // Skip files without an extension
+    let selectedDirectory = null;
+    
+    selectDirBtn.addEventListener('click', async () => {
+      try {
+        const directory = await window.api.selectDirectory();
+        if (directory) {
+          selectedDirectory = directory;
+          selectedPathElement.textContent = directory;
+          organizeBtn.disabled = false;
           
-          const targetFolder = path.join(folderPath, ext);
-          // Create the subfolder if it doesn't exist
-          if (!fs.existsSync(targetFolder)) {
-            fs.mkdirSync(targetFolder);
-          }
-          // Move the file to the subfolder
-          const targetPath = path.join(targetFolder, file);
-          fs.rename(filePath, targetPath, (err) => {
-            if (err) {
-              statusDiv.innerText += `Error moving ${file}: ${err}\n`;
-            } else {
-              statusDiv.innerText += `${file} moved to ${ext} folder\n`;
-            }
-          });
+          // Hide previous results
+          resultsDiv.classList.add('hidden');
+          successList.innerHTML = '';
+          errorList.innerHTML = '';
         }
-      });
+      } catch (error) {
+        console.error('Error selecting directory:', error);
+        alert(`Error selecting directory: ${error.message}`);
+      }
+    });
+    
+    organizeBtn.addEventListener('click', async () => {
+      if (!selectedDirectory) return;
+      
+      try {
+        organizeBtn.disabled = true;
+        organizeBtn.textContent = 'Organizing...';
+        
+        const results = await window.api.organizeFiles(selectedDirectory);
+        
+        // Display results
+        successList.innerHTML = '';
+        errorList.innerHTML = '';
+        
+        results.success.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `"${item.file}" → ${item.destination}`;
+          successList.appendChild(li);
+        });
+        
+        results.errors.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `"${item.file}": ${item.error}`;
+          errorList.appendChild(li);
+        });
+        
+        resultsDiv.classList.remove('hidden');
+        
+        organizeBtn.textContent = 'Organize Files';
+        organizeBtn.disabled = false;
+      } catch (error) {
+        console.error('Error organizing files:', error);
+        alert(`Error organizing files: ${error.message}`);
+        organizeBtn.textContent = 'Organize Files';
+        organizeBtn.disabled = false;
+      }
     });
   });
-}
