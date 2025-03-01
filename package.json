@@ -1,6 +1,6 @@
 {
   "name": "file-organizer",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "An app to organize files by type",
   "main": "main.js",
   "scripts": {

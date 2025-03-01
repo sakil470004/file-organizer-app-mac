@@ -2,6 +2,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs-extra');
+const Store = require('electron-store');
 
 let mainWindow;
 
@@ -61,12 +62,10 @@ ipcMain.handle('organize-files', async (event, directoryPath) => {
         const files = await fs.readdir(directoryPath);
         const results = { success: [], errors: [] };
 
-        // Create destination folders if they don't exist
-        for (const folder of Object.keys(fileTypes)) {
-            await fs.ensureDir(path.join(directoryPath, folder));
-        }
+        // Track which folders need to be created
+        const neededFolders = new Set();
 
-        // Process each file
+        // First pass: determine which folders are needed
         for (const file of files) {
             try {
                 const filePath = path.join(directoryPath, file);
@@ -86,8 +85,38 @@ ipcMain.handle('organize-files', async (event, directoryPath) => {
                     }
                 }
 
-                // Ensure the destination folder exists
-                await fs.ensureDir(path.join(directoryPath, destinationFolder));
+                // Mark this folder as needed
+                neededFolders.add(destinationFolder);
+            } catch (err) {
+                // Skip files we can't process
+                continue;
+            }
+        }
+
+        // Create only the needed destination folders
+        for (const folder of neededFolders) {
+            await fs.ensureDir(path.join(directoryPath, folder));
+        }
+
+        // Second pass: move the files
+        for (const file of files) {
+            try {
+                const filePath = path.join(directoryPath, file);
+                const stats = await fs.stat(filePath);
+
+                // Skip directories
+                if (stats.isDirectory()) continue;
+
+                const fileExtension = path.extname(file).toLowerCase();
+                let destinationFolder = 'other'; // Default folder for unrecognized types
+
+                // Find the correct folder based on file extension
+                for (const [folder, extensions] of Object.entries(fileTypes)) {
+                    if (extensions.includes(fileExtension)) {
+                        destinationFolder = folder;
+                        break;
+                    }
+                }
 
                 // Move the file
                 await fs.move(
